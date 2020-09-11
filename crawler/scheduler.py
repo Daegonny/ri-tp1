@@ -67,7 +67,7 @@ class Scheduler():
             if not domain.nam_domain in self.dic_url_per_domain:
                 self.dic_url_per_domain[domain] = []
             
-            self.dic_url_per_domain[domain].append((obj_url, int_depth))
+            self.dic_url_per_domain[domain.nam_domain].append((obj_url, int_depth))
         
             self.set_discovered_urls.add(obj_url)
             return True
