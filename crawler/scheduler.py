@@ -2,6 +2,8 @@ from urllib import robotparser
 from util.threads import synchronized
 from collections import OrderedDict
 from .domain import Domain
+from datetime import datetime, timedelta
+import time
 
 class Scheduler():
     #tempo (em segundos) entre as requisições
@@ -84,7 +86,10 @@ class Scheduler():
         
         url = depth = None 
         domains_to_remove = []
+        min_time_to_wait = None
+        
         while(url == None and depth == None and len(self.dic_url_per_domain) > 0):
+            
             for domain, urls in  self.dic_url_per_domain.items():
                 if domain.is_accessible():
                     domain.accessed_now()
@@ -94,7 +99,12 @@ class Scheduler():
                         break
                     else:
                         domains_to_remove.append(domain)
-                   
+                elif(min_time_to_wait == None or min_time_to_wait > domain.time_will_be_acessible):
+                    min_time_to_wait = domain.time_will_be_acessible
+
+            if(url == None and depth == None):
+                time_to_wait = max((domain.time_will_be_acessible - datetime.now()).total_seconds(), 0)
+                time.sleep(time_to_wait)   
         
         for domain in domains_to_remove:
             self.dic_url_per_domain.pop(domain, None)

@@ -7,7 +7,11 @@ class Domain():
 		self.int_time_limit_seconds  = int_time_limit_between_requests
 	@property
 	def time_since_last_access(self):
-		return datetime.now() - self.time_last_access 
+		return datetime.now() - self.time_last_access
+
+	@property
+	def time_will_be_acessible(self):
+		return self.time_last_access + timedelta(seconds=self.int_time_limit_seconds)
 
 	def accessed_now(self):
 		self.time_last_access = datetime.now()
