@@ -64,7 +64,7 @@ class Scheduler():
             
             domain = Domain(obj_url.netloc, self.TIME_LIMIT_BETWEEN_REQUESTS)
             
-            if not domain in self.dic_url_per_domain:
+            if not domain.nam_domain in self.dic_url_per_domain:
                 self.dic_url_per_domain[domain] = []
             
             self.dic_url_per_domain[domain].append((obj_url, int_depth))
