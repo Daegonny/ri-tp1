@@ -111,11 +111,22 @@ class Scheduler():
             
         return  url, depth
 
+    def get_robots(self, nam_domain):
+
+        robot_parser = robotparser.RobotFileParser()
+        robot_parser.set_url(f"http://{nam_domain}/robots.txt")
+        robot_parser.read()
+
+        return robot_parser
+
     def can_fetch_page(self,obj_url):
         """
         Verifica, por meio do robots.txt se uma determinada URL pode ser coletada
         """
-
-
-
-        return False
+        url = obj_url.geturl()
+        domain = obj_url.netloc
+        if domain not in self.dic_robots_per_domain:
+            robots = self.get_robots(domain)
+            self.dic_robots_per_domain[domain] = robots  
+ 
+        return self.dic_robots_per_domain.get(domain).can_fetch(self.str_usr_agent,url)
