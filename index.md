@@ -12,8 +12,9 @@ September 2020 to november 2020.
 
 ### People accountable
 
-Guilherme Henrique Campos Botelho and
-Ígor Chagas Marques 
+Guilherme Henrique Campos Botelho,
+Ígor Chagas Marques and
+Lucas Corrêa
 
 ### Support or Contact
 
