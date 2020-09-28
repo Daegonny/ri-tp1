@@ -30,7 +30,10 @@ class PageFetcher(Thread):
         for link in soup.select('a'):
             try:
                 obj_new_url = urlparse(urljoin(obj_url.geturl(), link['href']))
-                int_new_depth = int_depth + 1
+                if(obj_new_url.netloc == obj_url.netloc):
+                    int_new_depth = int_depth + 1
+                else:
+                    int_new_depth = 0
                 yield obj_new_url,int_new_depth
             except:
                 pass

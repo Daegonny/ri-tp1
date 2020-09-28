@@ -31,7 +31,7 @@ class Scheduler():
         self.finished = False
         self.list_collected_urls = []
 
-        [self.add_new_page(url,1) for url in arr_urls_seeds]
+        [self.add_new_page(url,0) for url in arr_urls_seeds]
 
     @synchronized
     def count_fetched_page(self):
