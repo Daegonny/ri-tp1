@@ -24,15 +24,14 @@ class Scheduler():
         self.int_page_limit = int_page_limit
         self.int_depth_limit = int_depth_limit
         self.int_page_count = 0
-
+        self.start_time = datetime.now()
         self.dic_url_per_domain = OrderedDict()
         self.set_discovered_urls = set()
         self.dic_robots_per_domain = {}
+        self.finished = False
+        self.list_collected_urls = []
 
         [self.add_new_page(url,1) for url in arr_urls_seeds]
-        
-        
-
 
     @synchronized
     def count_fetched_page(self):
@@ -45,7 +44,10 @@ class Scheduler():
         """
             Verifica se finalizou a coleta
         """
-        if(self.int_page_count > self.int_page_limit):
+        if(self.int_page_count >= self.int_page_limit):
+            if(not self.finished):
+                print("Finished with " + str(datetime.now() - self.start_time))
+            self.finished = True
             return True
         return False
 
@@ -67,7 +69,6 @@ class Scheduler():
         """
         #https://docs.python.org/3/library/urllib.parse.html
         if(self.can_add_page(obj_url, int_depth)):
-            
             domain = Domain(obj_url.netloc, self.TIME_LIMIT_BETWEEN_REQUESTS)
             
             if not domain.nam_domain in self.dic_url_per_domain:
@@ -87,7 +88,6 @@ class Scheduler():
         Obtem uma nova URL por meio da fila. Essa URL é removida da fila.
         Logo após, caso o servidor não tenha mais URLs, o mesmo também é removido.
         """
-        
         url = depth = None 
         domains_to_remove = []
         min_time_to_wait = None
@@ -102,7 +102,8 @@ class Scheduler():
                         urls.remove((url, depth))
                         break
                     else:
-                        domains_to_remove.append(domain)
+                        domains_to_remove.append(domain.nam_domain)
+                        
                 elif(min_time_to_wait == None or min_time_to_wait > domain.time_will_be_acessible):
                     min_time_to_wait = domain.time_will_be_acessible
 
@@ -110,8 +111,8 @@ class Scheduler():
                 time_to_wait = max((domain.time_will_be_acessible - datetime.now()).total_seconds(), 0)
                 time.sleep(time_to_wait)   
         
-        for domain in domains_to_remove:
-            self.dic_url_per_domain.pop(domain, None)
+            for domain in domains_to_remove:
+                self.dic_url_per_domain.pop(domain)
             
         return  url, depth
 
@@ -135,3 +136,7 @@ class Scheduler():
             self.dic_robots_per_domain[domain] = robots  
  
         return self.dic_robots_per_domain.get(domain).can_fetch(self.str_usr_agent,url)
+
+    @synchronized
+    def collect_url(self, obj_url):
+        self.list_collected_urls.append(obj_url.geturl())
