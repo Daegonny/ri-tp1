@@ -50,13 +50,41 @@ class PageFetcher(Thread):
         
         response = self.request_url(url)
         if(url != None and not self.obj_scheduler.has_finished_crawl()):
-            self.obj_scheduler.collect_url(url)
-            print(url.geturl())
-            self.obj_scheduler.count_fetched_page()
-            links = self.discover_links(url, depth, response)
-            for (new_url, new_depth) in links:
-                self.obj_scheduler.add_new_page(new_url, new_depth)
+            
+            if not self.has_no_index(response):
+                self.collect(url)
+            
+            if not self.has_no_follow(response):
+                self.gather_links(url, depth, response)
+            
 
+    def collect(self, obj_url):
+        self.obj_scheduler.collect_url(obj_url)
+        self.obj_scheduler.count_fetched_page()
+        print(obj_url.geturl())
+    
+    def gather_links(self, obj_url, depth, response_content):
+        links = self.discover_links(obj_url, depth, response_content)
+        for (new_url, new_depth) in links:
+            self.obj_scheduler.add_new_page(new_url, new_depth)
+                
+    def has_no_index(self, response_content):
+        return self.check_meta_content(response_content, 'noindex')
+    
+    def has_no_follow(self, response_content):
+        return self.check_meta_content(response_content, 'nofollow')
+                
+    def check_meta_content(self, response_content, keyword):
+        flag = False
+        soup = BeautifulSoup(response_content,features="lxml")
+        for meta in soup.find_all('meta', attrs={'name':'robots'}):
+            try:
+                if (keyword in meta['content']):
+                    flag = True
+                    break
+            except:
+                pass
+        return flag
 
     def run(self):
         """
