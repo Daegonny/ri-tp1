@@ -1,9 +1,12 @@
-from urllib import robotparser
-from util.threads import synchronized
-from collections import OrderedDict
-from .domain import Domain
-from datetime import datetime, timedelta
 import time
+from collections import OrderedDict
+from datetime import datetime, timedelta
+from urllib import robotparser
+
+from util.threads import synchronized
+
+from .domain import Domain
+
 
 class Scheduler():
     #tempo (em segundos) entre as requisições
@@ -70,17 +73,29 @@ class Scheduler():
         #https://docs.python.org/3/library/urllib.parse.html
         if(self.can_add_page(obj_url, int_depth)):
             domain = Domain(obj_url.netloc, self.TIME_LIMIT_BETWEEN_REQUESTS)
-            
+
             if not domain.nam_domain in self.dic_url_per_domain:
                 self.dic_url_per_domain[domain] = []
-            
+
             self.dic_url_per_domain[domain.nam_domain].append((obj_url, int_depth))
-        
+
             self.set_discovered_urls.add(obj_url)
             return True
-        
+
         return False
 
+    def remove_domains_without_urls(self, domains_to_remove):
+        '''
+            Remove domains without url to craw
+        '''
+        for domain in domains_to_remove:
+            self.dic_url_per_domain.pop(domain)
+
+    def wait_thread(self, time_to_wait):
+        time.sleep(max((time_to_wait - datetime.now()).total_seconds(), 0))
+
+    def has_domain_to_schedule(self):
+        return len(self.dic_url_per_domain) > 0
 
     @synchronized
     def get_next_url(self):
@@ -88,32 +103,36 @@ class Scheduler():
         Obtem uma nova URL por meio da fila. Essa URL é removida da fila.
         Logo após, caso o servidor não tenha mais URLs, o mesmo também é removido.
         """
-        url = depth = None 
+        def has_url_to_crawl(url, depth):
+            return url and depth
+
+        url = depth = None
         domains_to_remove = []
         min_time_to_wait = None
-        
-        while(url == None and depth == None and len(self.dic_url_per_domain) > 0):
-            
+
+        while(not has_url_to_crawl and self.has_domain_to_schedule()):
+
             for domain, urls in  self.dic_url_per_domain.items():
                 if domain.is_accessible():
                     domain.accessed_now()
-                    if len(urls) > 0:
+                    domain_has_url = len(urls) > 0
+
+                    if domain_has_url:
                         url, depth = urls[0]
                         urls.remove((url, depth))
                         break
-                    else:
-                        domains_to_remove.append(domain.nam_domain)
-                        
-                elif(min_time_to_wait == None or min_time_to_wait > domain.time_will_be_acessible):
+
+                    domains_to_remove.append(domain.nam_domain)
+
+                elif(min_time_to_wait is None or min_time_to_wait > domain.time_will_be_acessible):
                     min_time_to_wait = domain.time_will_be_acessible
 
-            if(url == None and depth == None):
-                time_to_wait = max((domain.time_will_be_acessible - datetime.now()).total_seconds(), 0)
-                time.sleep(time_to_wait)   
-        
-            for domain in domains_to_remove:
-                self.dic_url_per_domain.pop(domain)
-            
+            if not has_url_to_crawl(url, depth):
+                self.wait_thread(min_time_to_wait)
+
+            self.remove_domains_without_urls(domains_to_remove)
+
+
         return  url, depth
 
     def get_robots(self, nam_domain):
@@ -133,8 +152,8 @@ class Scheduler():
         domain = obj_url.netloc
         if domain not in self.dic_robots_per_domain:
             robots = self.get_robots(domain)
-            self.dic_robots_per_domain[domain] = robots  
- 
+            self.dic_robots_per_domain[domain] = robots
+
         return self.dic_robots_per_domain.get(domain).can_fetch(self.str_usr_agent,url)
 
     @synchronized

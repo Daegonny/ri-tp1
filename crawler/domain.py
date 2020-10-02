@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+
 class Domain():
 	def __init__(self,nam_domain,int_time_limit_between_requests):
 		self.time_last_access = datetime(1970,1,1)

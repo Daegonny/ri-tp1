@@ -1,8 +1,10 @@
+import time
 import unittest
 from urllib.parse import urlparse
-import time
+
 from .domain import *
 from .scheduler import *
+
 
 class DomainTest(unittest.TestCase):
 
@@ -16,6 +18,7 @@ class DomainTest(unittest.TestCase):
         print("aguardando 10 segundos...")
         time.sleep(10)
         self.assertTrue(domain.is_accessible(),f"Após a espera do tempo limite entre requisições, o servidor deveria voltar a ficar acessível")
+
 class SchedulerTest(unittest.TestCase):
     def setUp(self):
         arr_urls_seeds = []
