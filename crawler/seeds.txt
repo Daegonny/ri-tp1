@@ -1,5 +1,13 @@
 http://cnn.com
 http://www.gq.com.au/
-http://www.huffingtonpost.com/
+https://www.huffpost.com/
 http://www.globo.com/
 https://pt.wikipedia.org/wiki/Wikip%C3%A9dia:P%C3%A1gina_principal
+https://globoesporte.globo.com/
+https://www.espn.com.br/
+https://www.foxnews.com/
+https://www.bbc.com/
+https://www.reddit.com/
+https://abcnews.go.com/
+https://fivethirtyeight.com/
+https://www.nbcnews.com/
