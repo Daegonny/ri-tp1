@@ -50,8 +50,9 @@ class PageFetcher(Thread):
             self.finished = True
             return
 
-        response = self.request_url(url)
         if(url != None and not self.obj_scheduler.has_finished_crawl()):
+            response = self.request_url(url)
+            self.obj_scheduler.count_fetched_page()
 
             if not self.has_no_index(response):
                 self.collect(url)
@@ -61,7 +62,6 @@ class PageFetcher(Thread):
 
     def collect(self, obj_url):
         self.obj_scheduler.collect_url(obj_url)
-        self.obj_scheduler.count_fetched_page()
 
     def gather_links(self, obj_url, depth, response_content):
         links = self.discover_links(obj_url, depth, response_content)
@@ -76,15 +76,17 @@ class PageFetcher(Thread):
 
     def check_meta_content(self, response_content, keyword):
         flag = False
-        soup = BeautifulSoup(response_content, features="lxml")
-        for meta in soup.find_all('meta', attrs={'name': 'robots'}):
-            try:
-                if (keyword in meta['content']):
-                    flag = True
-                    break
-            except:
-                pass
-        return flag
+        if response_content:
+            soup = BeautifulSoup(response_content, features="lxml")
+            for meta in soup.find_all('meta', attrs={'name': 'robots'}):
+                try:
+                    if (keyword in meta['content']):
+                        flag = True
+                        break
+                except:
+                    pass
+            return flag
+        return False
 
     def run(self):
         """

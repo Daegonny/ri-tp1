@@ -1,3 +1,4 @@
+import os
 import time
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -34,8 +35,16 @@ class Scheduler():
         self.finished = False
         self.list_collected_urls = []
         self.crawl_duration = None
+        self.collected_urls_file_name = 'crawler/urls.txt'
+        self.remove_collected_urls_file()
 
         [self.add_new_page(url, 0) for url in arr_urls_seeds]
+
+    def remove_collected_urls_file(self):
+        try:
+            os.remove(self.collected_urls_file_name)
+        except FileNotFoundError:
+            pass
 
     @synchronized
     def count_fetched_page(self):
@@ -48,7 +57,7 @@ class Scheduler():
         """
             Verifica se finalizou a coleta
         """
-        if(self.int_page_count >= self.int_page_limit):
+        if(self.int_page_count > self.int_page_limit):
             if(not self.finished):
                 self.crawl_duration = datetime.now() - self.start_time
                 print(f"Finished with {str(self.crawl_duration)}")
@@ -145,3 +154,5 @@ class Scheduler():
     @synchronized
     def collect_url(self, obj_url):
         self.list_collected_urls.append(obj_url.geturl())
+        with open(self.collected_urls_file_name, 'a') as collected_file:
+            print(obj_url.geturl(), file=collected_file)
