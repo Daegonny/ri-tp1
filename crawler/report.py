@@ -26,7 +26,8 @@ class Report:
 
         for fetcher in fetchers:
            fetcher.join()
-        #scheduler.save_collected_urls()
+        print("Writing file! Please wait...")
+        scheduler.save_collected_urls()
 
     def plot(self, data, title):
         names = list(data.keys())

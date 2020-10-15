@@ -52,19 +52,18 @@ class Scheduler():
             Contabiliza o número de paginas já coletadas
         """
         self.int_page_count += 1
+        if(self.int_page_count > self.int_page_limit):
+            if(not self.finished):
+                self.crawl_duration = datetime.now() - self.start_time
+                print(f"Finished with {str(self.crawl_duration)}")
+            self.finished = True
 
     @synchronized
     def has_finished_crawl(self):
         """
             Verifica se finalizou a coleta
         """
-        if(self.int_page_count > self.int_page_limit):
-            if(not self.finished):
-                self.crawl_duration = datetime.now() - self.start_time
-                print(f"Finished with {str(self.crawl_duration)}")
-            self.finished = True
-            return True
-        return False
+        return self.finished
 
     @synchronized
     def can_add_page(self, obj_url, int_depth):
@@ -102,16 +101,15 @@ class Scheduler():
         Obtem uma nova URL por meio da fila. Essa URL é removida da fila.
         Logo após, caso o servidor não tenha mais URLs, o mesmo também é removido.
         """
-        url = depth = min_time_to_wait = None
+        url = depth = time_to_wait = min_time_to_wait = None
         domains_to_remove = []
-        time_to_wait = None
 
-        while(url == None and depth == None and len(self.dic_url_per_domain) > 0):
+        if(len(self.dic_url_per_domain) > 0 and not self.finished):
 
             for domain, urls in self.dic_url_per_domain.items():
                 if domain.is_accessible():
-                    domain.accessed_now()
                     if len(urls) > 0:
+                        domain.accessed_now()
                         url, depth = urls[0]
                         urls.remove((url, depth))
                         break
@@ -121,13 +119,12 @@ class Scheduler():
                 elif(min_time_to_wait == None or min_time_to_wait > domain.time_will_be_acessible):
                     min_time_to_wait = domain.time_will_be_acessible
 
-            if(url == None and depth == None):
-                time_to_wait = max(
-                    (min_time_to_wait - datetime.now()).total_seconds(), 0)
-                return url, depth, time_to_wait
-
             for domain in domains_to_remove:
+                print("removed", domain)
                 self.dic_url_per_domain.pop(domain)
+                
+            if(url == None and depth == None):
+                time_to_wait = max((min_time_to_wait - datetime.now()).total_seconds(), 0)
 
         return url, depth, time_to_wait
 
@@ -142,7 +139,6 @@ class Scheduler():
         """
         Verifica, por meio do robots.txt se uma determinada URL pode ser coletada
         """
-        
         url = obj_url.geturl()
         domain = obj_url.netloc
         if domain not in self.dic_robots_per_domain:
@@ -150,17 +146,15 @@ class Scheduler():
                 self.dic_robots_per_domain[domain] = self.get_robots(
                     domain).can_fetch(self.str_usr_agent, url)
             except:
-                print('exceção')
                 self.dic_robots_per_domain[domain] = False
                 return False
-        print(domain, self.dic_robots_per_domain.get(domain))
         return self.dic_robots_per_domain.get(domain)
 
     @synchronized
     def collect_url(self, obj_url):
+        print("coletado", obj_url.geturl())
+        self.count_fetched_page()
         self.list_collected_urls.append(obj_url.geturl())
-        # with open(self.collected_urls_file_name, 'a') as collected_file:
-        #     print(obj_url.geturl(), file=collected_file)
         
     def save_collected_urls(self):
         with open(self.collected_urls_file_name, 'a') as collected_file:

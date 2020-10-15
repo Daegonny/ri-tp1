@@ -34,6 +34,7 @@ class PageFetcher(Thread):
         Retorna os links do conteúdo bin_str_content da página já requisitada obj_url
         """
         soup = BeautifulSoup(bin_str_content, features="lxml")
+        list_url_depth = []
         for link in soup.select('a'):
             try:
                 obj_new_url = urlparse(urljoin(obj_url.geturl(), link['href']))
@@ -41,9 +42,10 @@ class PageFetcher(Thread):
                     int_new_depth = int_depth + 1
                 else:
                     int_new_depth = 0
-                yield obj_new_url, int_new_depth
+                list_url_depth.append((obj_new_url, int_new_depth))
             except:
                 pass
+        return list_url_depth
 
     def crawl_new_url(self):
         """
@@ -51,8 +53,7 @@ class PageFetcher(Thread):
         """
         url, depth, time_to_wait = self.obj_scheduler.get_next_url()
 
-        while time_to_wait is not None:
-            print("wait", time_to_wait)
+        while time_to_wait and not self.obj_scheduler.has_finished_crawl():
             time.sleep(time_to_wait)
             url, depth, time_to_wait = self.obj_scheduler.get_next_url()
 
@@ -61,11 +62,10 @@ class PageFetcher(Thread):
             return
 
         can_fetch_page = self.obj_scheduler.can_fetch_page(url)
+     
         if(url != None and not self.obj_scheduler.has_finished_crawl() and can_fetch_page):
             response = self.request_url(url)
             if response:
-                self.obj_scheduler.count_fetched_page()
-
                 if not self.has_no_index(response):
                     self.collect(url)
 
@@ -107,3 +107,4 @@ class PageFetcher(Thread):
         """
         while not self.obj_scheduler.has_finished_crawl() and not self.finished:
             self.crawl_new_url()
+        print("acabou")
