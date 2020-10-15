@@ -20,7 +20,7 @@ class PageFetcher(Thread):
             obj_url: Instancia da classe ParseResult com a URL a ser requisitada.
         """
         try:
-            response = requests.get(obj_url.geturl(),timeout=10, headers={
+            response = requests.get(obj_url.geturl(),timeout=0.1, headers={
                                     'user-agent': self.obj_scheduler.str_usr_agent})
             if 'text/html' in response.headers['content-type']:
                 return response.content
