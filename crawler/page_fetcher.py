@@ -1,3 +1,5 @@
+import os
+import time
 from threading import Thread
 from urllib.parse import urljoin, urlparse
 
@@ -17,11 +19,14 @@ class PageFetcher(Thread):
 
             obj_url: Instancia da classe ParseResult com a URL a ser requisitada.
         """
-        response = requests.get(obj_url.geturl(), headers={
-                                'user-agent': self.obj_scheduler.str_usr_agent})
-        if 'text/html' in response.headers['content-type']:
-            return response.content
-        else:
+        try:
+            response = requests.get(obj_url.geturl(), headers={
+                                    'user-agent': self.obj_scheduler.str_usr_agent})
+            if 'text/html' in response.headers['content-type']:
+                return response.content
+            else:
+                return None
+        except Exception:
             return None
 
     def discover_links(self, obj_url, int_depth, bin_str_content):
@@ -44,21 +49,28 @@ class PageFetcher(Thread):
         """
             Coleta uma nova URL, obtendo-a do escalonador
         """
-        url, depth = self.obj_scheduler.get_next_url()
+        url, depth, time_to_wait = self.obj_scheduler.get_next_url()
+
+        while time_to_wait is not None:
+            time.sleep(time_to_wait)
+            url, depth, time_to_wait = self.obj_scheduler.get_next_url()
 
         if(url == None):
             self.finished = True
             return
 
-        if(url != None and not self.obj_scheduler.has_finished_crawl()):
+        can_fetch_page = self.obj_scheduler.can_fetch_page(url)
+        if(url != None and not self.obj_scheduler.has_finished_crawl() and can_fetch_page):
             response = self.request_url(url)
-            self.obj_scheduler.count_fetched_page()
+            print(url.geturl())
+            if response:
+                self.obj_scheduler.count_fetched_page()
 
-            if not self.has_no_index(response):
-                self.collect(url)
+                if not self.has_no_index(response):
+                    self.collect(url)
 
-            if not self.has_no_follow(response):
-                self.gather_links(url, depth, response)
+                if not self.has_no_follow(response):
+                    self.gather_links(url, depth, response)
 
     def collect(self, obj_url):
         self.obj_scheduler.collect_url(obj_url)

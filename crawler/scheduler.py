@@ -11,7 +11,7 @@ from .domain import Domain
 
 class Scheduler():
     # tempo (em segundos) entre as requisições
-    TIME_LIMIT_BETWEEN_REQUESTS = 20
+    TIME_LIMIT_BETWEEN_REQUESTS = 30
 
     def __init__(self, str_usr_agent, int_page_limit, int_depth_limit, arr_urls_seeds):
         """
@@ -101,9 +101,9 @@ class Scheduler():
         Obtem uma nova URL por meio da fila. Essa URL é removida da fila.
         Logo após, caso o servidor não tenha mais URLs, o mesmo também é removido.
         """
-        url = depth = None
+        url = depth = min_time_to_wait = None
         domains_to_remove = []
-        min_time_to_wait = None
+        time_to_wait = None
 
         while(url == None and depth == None and len(self.dic_url_per_domain) > 0):
 
@@ -123,12 +123,12 @@ class Scheduler():
             if(url == None and depth == None):
                 time_to_wait = max(
                     (min_time_to_wait - datetime.now()).total_seconds(), 0)
-                time.sleep(time_to_wait)
+                return url, depth, time_to_wait
 
             for domain in domains_to_remove:
                 self.dic_url_per_domain.pop(domain)
 
-        return url, depth
+        return url, depth, time_to_wait
 
     def get_robots(self, nam_domain):
 
@@ -143,16 +143,19 @@ class Scheduler():
         """
         Verifica, por meio do robots.txt se uma determinada URL pode ser coletada
         """
+        return True
         url = obj_url.geturl()
         domain = obj_url.netloc
         if domain not in self.dic_robots_per_domain:
-            robots = self.get_robots(domain)
-            self.dic_robots_per_domain[domain] = robots
-
-        return self.dic_robots_per_domain.get(domain).can_fetch(self.str_usr_agent, url)
+            try:
+                self.dic_robots_per_domain[domain] = self.get_robots(
+                    domain).can_fetch(self.str_usr_agent, url)
+            except:
+                self.dic_robots_per_domain[domain] = False
+        return self.dic_robots_per_domain.get(domain)
 
     @synchronized
     def collect_url(self, obj_url):
         self.list_collected_urls.append(obj_url.geturl())
-        with open(self.collected_urls_file_name, 'a') as collected_file:
-            print(obj_url.geturl(), file=collected_file)
+        # with open(self.collected_urls_file_name, 'a') as collected_file:
+        #     print(obj_url.geturl(), file=collected_file)
