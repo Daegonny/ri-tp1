@@ -23,6 +23,10 @@ class Scheduler():
             - `dic_url_per_domain`: Fila de URLs por domínio (explicado anteriormente)
             - `set_discovered_urls`: Conjunto de URLs descobertas, ou seja, que foi extraída em algum HTML e já adicionadas na fila - mesmo se já ela foi retirada da fila. A URL armazenada deve ser uma string.
             - `dic_robots_per_domain`: Dicionário armazenando, para cada domínio, o objeto representando as regras obtidas no `robots.txt`
+            - `finished`: Indica se coleta já acabou
+            - `list_collected_urls`: Indica se coleta já acabou
+            - `crawl_duration`: Duração da coleta
+            - `collected_urls_file_name`: Arquivo para salvar as URLs coletadas
         """
         self.str_usr_agent = str_usr_agent
         self.int_page_limit = int_page_limit
