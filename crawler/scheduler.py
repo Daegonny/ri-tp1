@@ -120,15 +120,18 @@ class Scheduler():
                     min_time_to_wait = domain.time_will_be_acessible
 
             for domain in domains_to_remove:
-                print("removed", domain)
+                #print("removed", domain)
                 self.dic_url_per_domain.pop(domain)
                 
             if(url == None and depth == None):
-                time_to_wait = max((min_time_to_wait - datetime.now()).total_seconds(), 0)
+                time_to_wait = max((min_time_to_wait - datetime.now()).total_seconds(), 0) if min_time_to_wait else 0
 
         return url, depth, time_to_wait
 
     def get_robots(self, nam_domain):
+        """
+        retorna o robots de um domínio
+        """
         robot_parser = robotparser.RobotFileParser()
         robot_parser.set_url(f"http://{nam_domain}/robots.txt")
         robot_parser.read()
@@ -152,7 +155,7 @@ class Scheduler():
 
     @synchronized
     def collect_url(self, obj_url):
-        print("coletado", obj_url.geturl())
+        #print("collected", obj_url.geturl())
         self.count_fetched_page()
         self.list_collected_urls.append(obj_url.geturl())
         
