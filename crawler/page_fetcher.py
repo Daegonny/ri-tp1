@@ -52,6 +52,7 @@ class PageFetcher(Thread):
         url, depth, time_to_wait = self.obj_scheduler.get_next_url()
 
         while time_to_wait is not None:
+            print("wait", time_to_wait)
             time.sleep(time_to_wait)
             url, depth, time_to_wait = self.obj_scheduler.get_next_url()
 
@@ -62,7 +63,6 @@ class PageFetcher(Thread):
         can_fetch_page = self.obj_scheduler.can_fetch_page(url)
         if(url != None and not self.obj_scheduler.has_finished_crawl() and can_fetch_page):
             response = self.request_url(url)
-            print(url.geturl())
             if response:
                 self.obj_scheduler.count_fetched_page()
 
@@ -78,7 +78,8 @@ class PageFetcher(Thread):
     def gather_links(self, obj_url, depth, response_content):
         links = self.discover_links(obj_url, depth, response_content)
         for (new_url, new_depth) in links:
-            self.obj_scheduler.add_new_page(new_url, new_depth)
+            if(new_url.geturl()):
+                self.obj_scheduler.add_new_page(new_url, new_depth)
 
     def has_no_index(self, response_content):
         return self.check_meta_content(response_content, 'noindex')
@@ -98,7 +99,7 @@ class PageFetcher(Thread):
                 except:
                     pass
             return flag
-        return False
+        return flag
 
     def run(self):
         """

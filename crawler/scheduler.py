@@ -37,7 +37,7 @@ class Scheduler():
         self.crawl_duration = None
         self.collected_urls_file_name = 'crawler/urls.txt'
         self.remove_collected_urls_file()
-
+        
         [self.add_new_page(url, 0) for url in arr_urls_seeds]
 
     def remove_collected_urls_file(self):
@@ -53,6 +53,7 @@ class Scheduler():
         """
         self.int_page_count += 1
 
+    @synchronized
     def has_finished_crawl(self):
         """
             Verifica se finalizou a coleta
@@ -131,11 +132,9 @@ class Scheduler():
         return url, depth, time_to_wait
 
     def get_robots(self, nam_domain):
-
         robot_parser = robotparser.RobotFileParser()
         robot_parser.set_url(f"http://{nam_domain}/robots.txt")
         robot_parser.read()
-
         return robot_parser
 
     @synchronized
@@ -143,7 +142,7 @@ class Scheduler():
         """
         Verifica, por meio do robots.txt se uma determinada URL pode ser coletada
         """
-        return True
+        
         url = obj_url.geturl()
         domain = obj_url.netloc
         if domain not in self.dic_robots_per_domain:
@@ -151,7 +150,10 @@ class Scheduler():
                 self.dic_robots_per_domain[domain] = self.get_robots(
                     domain).can_fetch(self.str_usr_agent, url)
             except:
+                print('exceção')
                 self.dic_robots_per_domain[domain] = False
+                return False
+        print(domain, self.dic_robots_per_domain.get(domain))
         return self.dic_robots_per_domain.get(domain)
 
     @synchronized
@@ -159,3 +161,8 @@ class Scheduler():
         self.list_collected_urls.append(obj_url.geturl())
         # with open(self.collected_urls_file_name, 'a') as collected_file:
         #     print(obj_url.geturl(), file=collected_file)
+        
+    def save_collected_urls(self):
+        with open(self.collected_urls_file_name, 'a') as collected_file:
+            for url in self.list_collected_urls:
+                print(url, file=collected_file)

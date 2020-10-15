@@ -25,7 +25,8 @@ class Report:
             fetchers.append(fetcher)
 
         for fetcher in fetchers:
-            fetcher.join()
+           fetcher.join()
+        #scheduler.save_collected_urls()
 
     def plot(self, data, title):
         names = list(data.keys())
