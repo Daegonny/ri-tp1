@@ -25,12 +25,16 @@ class Report:
             fetchers.append(fetcher)
 
         for fetcher in fetchers:
-            fetcher.join()
+           fetcher.join()
+        print("Writing file! Please wait...")
+        scheduler.save_collected_urls()
 
     def plot(self, data, title):
         names = list(data.keys())
         values = list(data.values())
         fig, ax = plt.subplots()
+        ax.set_xlabel('Número de Threads')
+        ax.set_ylabel('Tempo (s)')
         ax.scatter(names, values)
         fig.suptitle(title)
 
@@ -50,4 +54,4 @@ class Report:
                 fetcher.join()
 
             results.update({n_threads: scheduler.crawl_duration.seconds})
-        self.plot(data=results, title='Análise de velocidade')
+        self.plot(data=results, title='Análise de velocidade: Tempo x Número de Threads')
